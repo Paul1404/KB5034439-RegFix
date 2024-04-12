@@ -3,7 +3,7 @@
     Adds or updates a registry key with specified value.
 .DESCRIPTION
     This script adds or updates a registry key in the Windows Registry. It is designed to be run with administrative privileges.
-    It includes detailed error handling, verification of the operation, and logs the results to a file.
+    It includes error handling, verification of the operation, and logs the results to a file. The log file location is provided for review.
 .PARAMETER keyPath
     The registry key path where the value should be added or updated.
 .PARAMETER valueName
@@ -37,6 +37,8 @@ if (-not (Test-IsAdmin)) {
 # Set default log file path if $PSScriptRoot is not set (such as when script is run directly from a URL)
 $logFile = if ($PSScriptRoot) { Join-Path $PSScriptRoot "RegistryChangeLog.log" } else { Join-Path $env:TEMP "RegistryChangeLog.log" }
 
+Write-Host "Log file will be written to: $logFile"
+
 # Function to add or update a registry key with logging
 function Add-RegistryKey {
     param (
@@ -51,23 +53,23 @@ function Add-RegistryKey {
         Set-ItemProperty -Path $keyPath -Name $valueName -Value $data -Force
 
         # Log success
-        $message = "$(Get-Date) - SUCCESS: Registry key `'$valueName`' updated to `'$data`'."
-        Add-Content -Path $logFile -Value $message
-        Write-Host $message
+        $logEntry = "[$(Get-Date)] - SUCCESS: Registry key '$valueName' updated to '$data'."
+        Add-Content -Path $logFile -Value $logEntry
+        Write-Host $logEntry -ForegroundColor Green
 
         # Verify the update
         $verify = Get-ItemProperty -Path $keyPath -Name $valueName
         if ($verify.$valueName -eq $data) {
-            $message = "$(Get-Date) - VERIFICATION SUCCESS: Key value matches `'$data`'."
-            Add-Content -Path $logFile -Value $message
-            Write-Host $message
+            $logEntry = "[$(Get-Date)] - VERIFICATION SUCCESS: Key value matches '$data'."
+            Add-Content -Path $logFile -Value $logEntry
+            Write-Host $logEntry -ForegroundColor Green
         } else {
-            throw "Verification failed: Key value does not match `'$data`'."
+            throw "Verification failed: Key value does not match '$data'."
         }
     } catch {
-        $errorMessage = "$(Get-Date) - ERROR: Failed to add registry key `'$valueName`'. Exception: $_"
-        Add-Content -Path $logFile -Value $errorMessage
-        Write-Host $errorMessage -ForegroundColor Red
+        $logEntry = "[$(Get-Date)] - ERROR: Failed to add registry key '$valueName'. Error: $_"
+        Add-Content -Path $logFile -Value $logEntry
+        Write-Host $logEntry -ForegroundColor Red
     }
 }
 
