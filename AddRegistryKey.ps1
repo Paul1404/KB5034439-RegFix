@@ -45,8 +45,8 @@ function Add-RegistryKey {
     )
 
     try {
-        # Adding the registry key using PowerShell command instead of Invoke-Expression for better clarity and security
-        Set-ItemProperty -Path $keyPath -Name $valueName -Value $data -Type String -Force
+        # Adding the registry key
+        Set-ItemProperty -Path $keyPath -Name $valueName -Value $data -Force
 
         # Verifying the update
         $verify = Get-ItemProperty -Path $keyPath -Name $valueName
