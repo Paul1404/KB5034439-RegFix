@@ -17,7 +17,7 @@
 #>
 
 param (
-    [string]$keyPath = "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion",
+    [string]$keyPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion",
     [string]$valueName = "WinREVersion",
     [string]$data = "10.0.20348.2201"
 )
