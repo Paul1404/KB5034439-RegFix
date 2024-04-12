@@ -34,18 +34,21 @@ if (-not (Test-IsAdmin)) {
     exit
 }
 
-# Log file location set to the script's execution directory
-$logFile = Join-Path $PSScriptRoot "RegistryChangeLog.log"
+# Set default log file path if $PSScriptRoot is not set (such as when script is run directly from a URL)
+$logFile = if ($PSScriptRoot) { Join-Path $PSScriptRoot "RegistryChangeLog.log" } else { Join-Path $env:TEMP "RegistryChangeLog.log" }
 
 function Add-RegistryKey {
-    param($keyPath, $valueName, $data, $logFile)
+    param (
+        [string]$keyPath = "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion",
+        [string]$valueName = "WinREVersion",
+        [string]$data = "10.0.20348.2201"
+    )
 
     try {
-        # Command to add the registry key
-        $command = "reg add `"$keyPath`" /f /v $valueName /t REG_SZ /d `"$data`""
-        Invoke-Expression $command
-        
-        # Verify the key was added successfully
+        # Adding the registry key using PowerShell command instead of Invoke-Expression for better clarity and security
+        Set-ItemProperty -Path $keyPath -Name $valueName -Value $data -Type String -Force
+
+        # Verifying the update
         $verify = Get-ItemProperty -Path $keyPath -Name $valueName
         if ($verify.$valueName -eq $data) {
             Add-Content -Path $logFile -Value "[$(Get-Date)] - SUCCESS: Registry key `$valueName` updated to `$data`."
