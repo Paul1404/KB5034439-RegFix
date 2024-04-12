@@ -3,7 +3,7 @@
     Adds or updates a registry key with specified value.
 .DESCRIPTION
     This script adds or updates a registry key in the Windows Registry. It is designed to be run with administrative privileges.
-    It includes error handling, verification of the operation, and logs the results to a file in the script's execution directory.
+    It includes detailed error handling, verification of the operation, and logs the results to a file.
 .PARAMETER keyPath
     The registry key path where the value should be added or updated.
 .PARAMETER valueName
@@ -11,7 +11,7 @@
 .PARAMETER data
     The data to be set for the registry value.
 .EXAMPLE
-    .\AddRegistryKey.ps1 -keyPath "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" -valueName "WinREVersion" -data "10.0.20348.2201"
+    .\AddRegistryKey.ps1 -keyPath "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" -valueName "WinREVersion" -data "10.0.20348.2201"
 .NOTES
     Ensure the script is run as an Administrator to modify registry keys.
 #>
@@ -40,30 +40,36 @@ $logFile = if ($PSScriptRoot) { Join-Path $PSScriptRoot "RegistryChangeLog.log" 
 # Function to add or update a registry key with logging
 function Add-RegistryKey {
     param (
-        [string]$keyPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion",
-        [string]$valueName = "WinREVersion",
-        [string]$data = "10.0.20348.2201",
-        [string]$logFile = "$env:TEMP\RegistryChangeLog.log"
+        [string]$keyPath,
+        [string]$valueName,
+        [string]$data,
+        [string]$logFile
     )
 
     try {
         # Check and set the registry value
         Set-ItemProperty -Path $keyPath -Name $valueName -Value $data -Force
 
+        # Log success
+        $message = "$(Get-Date) - SUCCESS: Registry key `'$valueName`' updated to `'$data`'."
+        Add-Content -Path $logFile -Value $message
+        Write-Host $message
+
         # Verify the update
         $verify = Get-ItemProperty -Path $keyPath -Name $valueName
         if ($verify.$valueName -eq $data) {
-            Add-Content -Path $logFile -Value "[$(Get-Date)] - SUCCESS: Registry key `$valueName` updated to `$data`."
-            Write-Host "Registry key added successfully."
+            $message = "$(Get-Date) - VERIFICATION SUCCESS: Key value matches `'$data`'."
+            Add-Content -Path $logFile -Value $message
+            Write-Host $message
         } else {
-            throw "Verification failed: Key value does not match `$data`."
+            throw "Verification failed: Key value does not match `'$data`'."
         }
     } catch {
-        Add-Content -Path $logFile -Value "[$(Get-Date)] - ERROR: Failed to add registry key `$valueName`. Error: $_"
-        Write-Host "Error encountered: $_"
+        $errorMessage = "$(Get-Date) - ERROR: Failed to add registry key `'$valueName`'. Exception: $_"
+        Add-Content -Path $logFile -Value $errorMessage
+        Write-Host $errorMessage -ForegroundColor Red
     }
 }
-
 
 # Execute the function
 Add-RegistryKey -keyPath $keyPath -valueName $valueName -data $data -logFile $logFile
