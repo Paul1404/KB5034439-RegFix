@@ -37,18 +37,20 @@ if (-not (Test-IsAdmin)) {
 # Set default log file path if $PSScriptRoot is not set (such as when script is run directly from a URL)
 $logFile = if ($PSScriptRoot) { Join-Path $PSScriptRoot "RegistryChangeLog.log" } else { Join-Path $env:TEMP "RegistryChangeLog.log" }
 
+# Function to add or update a registry key with logging
 function Add-RegistryKey {
     param (
         [string]$keyPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion",
         [string]$valueName = "WinREVersion",
-        [string]$data = "10.0.20348.2201"
+        [string]$data = "10.0.20348.2201",
+        [string]$logFile = "$env:TEMP\RegistryChangeLog.log"
     )
 
     try {
-        # Adding the registry key
+        # Check and set the registry value
         Set-ItemProperty -Path $keyPath -Name $valueName -Value $data -Force
 
-        # Verifying the update
+        # Verify the update
         $verify = Get-ItemProperty -Path $keyPath -Name $valueName
         if ($verify.$valueName -eq $data) {
             Add-Content -Path $logFile -Value "[$(Get-Date)] - SUCCESS: Registry key `$valueName` updated to `$data`."
@@ -61,6 +63,7 @@ function Add-RegistryKey {
         Write-Host "Error encountered: $_"
     }
 }
+
 
 # Execute the function
 Add-RegistryKey -keyPath $keyPath -valueName $valueName -data $data -logFile $logFile
